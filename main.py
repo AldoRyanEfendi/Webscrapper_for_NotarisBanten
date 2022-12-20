@@ -46,7 +46,7 @@ class WebScrapper:
             self.find_element(By.NAME, 'date').send_keys(self.details['tgl'])
             self.find_element(By.NAME, 'type').send_keys(self.details['akta'])
             self.find_element(By.NAME, 'appearer').send_keys(self.details['penghadap'])
-            # self.find_element(By.CLASS_NAME, 'btn-primary').click()
+            self.find_element(By.CLASS_NAME, 'btn-primary').click()
             time.sleep(120)
             break
 
