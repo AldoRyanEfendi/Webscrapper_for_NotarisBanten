@@ -16,6 +16,9 @@ class WebScrapper:
     def find_element(self, finder, element):
         return self.driver.find_element(finder, element)
 
+    def find_elements(self, finder, element):
+        return self.driver.find_elements(finder, element)
+
     def open_ui(self):
         WSM = WebScrapperMenu(self.result)
         self.result, values, self.context = WSM.main(self.map)
@@ -25,11 +28,14 @@ class WebScrapper:
         elif self.context == 'input':
             self.details = values.copy()
         elif self.context == 'delete':
-            self.amount = values['amount']
+            self.amount = values
 
     def open_webdriver(self):
         self.driver = webdriver.Chrome(executable_path="./chromedriver.exe")
-        self.driver.get(self.details['url'])
+        if self.context == 'menu':
+            self.driver.get(self.details['url'])
+        else:
+            self.driver.get(self.amount['url'])
         self.driver.maximize_window()
         self.driver.implicitly_wait(1200)
 
@@ -43,12 +49,24 @@ class WebScrapper:
             self.driver.get(self.details['url'])
             self.find_element(By.NAME, 'serial').send_keys(x+int(self.details['urut']))
             self.find_element(By.NAME, 'monthly').send_keys(y)
+            self.find_element(By.NAME, 'date').clear()
             self.find_element(By.NAME, 'date').send_keys(self.details['tgl'])
             self.find_element(By.NAME, 'type').send_keys(self.details['akta'])
             self.find_element(By.NAME, 'appearer').send_keys(self.details['penghadap'])
             self.find_element(By.CLASS_NAME, 'btn-primary').click()
-            time.sleep(120)
-            break
+    
+    def delete_data(self):
+        urls = []
+        self.driver.get(self.amount['url'])
+        elements = self.find_elements(By.ID, 'delete_button')
+        for num, element in enumerate(elements):
+            urls.append(element.get_attribute('href'))
+            if num+1 == int(self.amount['amount']):
+                break
+        
+        for url in urls:
+            self.driver.get(url)
+        
 
     def main(self):
         try:
@@ -87,8 +105,11 @@ class WebScrapper:
 
                         break
                     else:
-                        if not self.amount:
-                            WarningWindow('Warning', f'Jumlah tidak boleh kosong')
+                        if not self.amount['amount'] or not self.amount['url']:
+                            if not self.amount['amount']:
+                                WarningWindow('Warning', f'Jumlah tidak boleh kosong')
+                            if not self.amount['url']:
+                                WarningWindow('Warning', f'URL tidak boleh kosong')
                             self.result = 'menu'
                             continue
                         break
@@ -96,8 +117,11 @@ class WebScrapper:
             if self.result == 'start':
                 self.open_webdriver()
                 self.login()
-                print(self.context)
-                self.input_data()
+
+                if self.context == 'menu':
+                    self.input_data()
+                else:
+                    self.delete_data()
 
         except Exception as e:
             WarningWindow('Error', f'An Error Occured :\n{str(e)}')
@@ -141,7 +165,11 @@ class WebScrapperMenu:
             ]
         elif option == 'delete':
             self.layout = [
-                [[sg.In(size=(50, 1), enable_events=True, key="URL"),], [sg.In(size=(50, 1), enable_events=True, key="amount"),], sg.Button('Start'), sg.Button('Cancel')]
+                [sg.Text("URL")],
+                [sg.In(size=(50, 1), enable_events=True, key="url"),], 
+                [sg.Text("Jumlah Data")],
+                [sg.In(size=(50, 1), enable_events=True, key="amount"),], 
+                [sg.Button('Start'), sg.Button('Cancel')]
             ]
         else:
             self.layout = [
