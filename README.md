@@ -7,4 +7,4 @@ For Auto fill and delete data in notaris banten
 3. jalankan ```pip install -r req.txt```
 
 # How To Run
-> python main.py
+```python main.py```
